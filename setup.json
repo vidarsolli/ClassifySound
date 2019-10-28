@@ -1,0 +1,17 @@
+{
+  "AudioFolder":"./Sound",
+  "Database": "recordings",
+  "WindowSize": 0.05,
+  "StepSize":   0.025,
+  "Windowing": "Yes",
+  "Energy": "Yes",
+  "ZCR": "Yes",
+  "EnergyEntropy": "Yes",
+  "SpectralCentroid": "Yes",
+  "SpectralSpread": "Yes",
+  "SpectralFlux": "Yes",
+  "SpectralRolloff": "Yes",
+  "MFCC": "Yes",
+  "Chroma": "Yes",
+  "SpectralFlatness": "Yes"
+}
