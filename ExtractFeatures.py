@@ -179,7 +179,7 @@ for audio_file in audio_files:
         print(err)
         exit(1)
     print("Database {} is selected".format(database))
-    # Create the Record table for this file
+    # Create the Recording table for this file
     date = str(datetime.now())
     date = date.split(".")[0]
     add_record_row = ("insert into Recording"
@@ -191,12 +191,23 @@ for audio_file in audio_files:
         print(err)
         exit(1)
     record_id = cursor.lastrowid
+    # Create statistics tables for this file
+    add_statistics_row = ("insert into Sound_statistics (parent, energy) values (%s, %s)")
+    cursor.execute(add_statistics_row, (0, 0))
+    std_id = cursor.lastrowid
+    cursor.execute(add_statistics_row, (0, 0))
+    mean_id = cursor.lastrowid
+    cursor.execute(add_statistics_row, (0, 0))
+    min_id = cursor.lastrowid
+    cursor.execute(add_statistics_row, (0, 0))
+    max_id = cursor.lastrowid
+
     # Create the Sound table for this file
     add_sound_row = ("insert into Sound"
-                        "(sample_rate, window_size, step_size) "
-                        "values (%s, %s, %s)")
+                        "(sample_rate, window_size, step_size, std, mean, min, max) "
+                        "values (%s, %s, %s, %s, %s, %s, %s)")
     try:
-        cursor.execute(add_sound_row, (sample_rate, window_size, step_size))
+        cursor.execute(add_sound_row, (sample_rate, window_size, step_size, std_id, mean_id, min_id, max_id))
     except mysql.connector.Error as err:
         print(err)
         exit(1)
@@ -272,10 +283,59 @@ for audio_file in audio_files:
         if use_spectral_rolloff_feature:
             update_value = ("update Sound_features set spectral_rolloff = %s where Sound_features.id = %s")
             cursor.execute(update_value, (str(rolloff[0][row]), feature_id))
+    #---------------------
+    # Save the statistics
+    #---------------------
+    def save_statistics(y, name):
+        std = np.std(y, axis=1)
+        mean = np.mean(y, axis=1)
+        min = np.min(y, axis=1)
+        max = np.max(y, axis=1)
+        command = "update Sound_statistics set "+name+"= %s where Sound_statistics.id = %s"
+        cursor.execute(command, (str(std[0]), std_id))
+        cursor.execute(command, (str(mean[0]), mean_id))
+        cursor.execute(command, (str(min[0]), min_id))
+        cursor.execute(command, (str(max[0]), max_id))
 
 
-    print("loop count: ", loop)
-    cursor.close()
-    cnx.commit()
-    cnx.close()
+    if use_mfcc_feature:
+        # Save statistics for all MFCC elements
+        std = np.std(mfcc, axis=1)
+        mean = np.mean(mfcc, axis=1)
+        min = np.min(mfcc, axis=1)
+        max = np.max(mfcc, axis=1)
+        print("Std shape: ", std.shape)
+        for j in range(N_MFCC):
+            update_value = ("update Sound_statistics set mfcc%s = %s where Sound_statistics.id = %s")
+            cursor.execute(update_value, (j, str(std[j]), std_id))
+            cursor.execute(update_value, (j, str(mean[j]), mean_id))
+            cursor.execute(update_value, (j, str(min[j]), min_id))
+            cursor.execute(update_value, (j, str(max[j]), max_id))
+    if use_chroma_feature:
+        std = np.std(chroma, axis=1)
+        mean = np.mean(chroma, axis=1)
+        min = np.min(chroma, axis=1)
+        max = np.max(chroma, axis=1)
+        print("Std shape: ", std.shape)
+        for j in range(N_CHROMA):
+            update_value = ("update Sound_statistics set chroma%s = %s where Sound_statistics.id = %s")
+            cursor.execute(update_value, (j, str(std[j]), std_id))
+            cursor.execute(update_value, (j, str(mean[j]), mean_id))
+            cursor.execute(update_value, (j, str(min[j]), min_id))
+            cursor.execute(update_value, (j, str(max[j]), max_id))
+
+    if use_zcr_feature:
+        save_statistics(zcr, "zcr")
+    if use_spectral_flatness_feature:
+        save_statistics(flatness, "spectral_flatness")
+    if use_spectral_centroid_feature:
+        save_statistics(centroid, "spectral_centroid")
+    if use_spectral_rolloff_feature:
+        save_statistics(rolloff, "spectral_rolloff")
+
+
+print("loop count: ", loop)
+cursor.close()
+cnx.commit()
+cnx.close()
 
