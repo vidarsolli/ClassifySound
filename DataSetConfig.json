@@ -1,0 +1,6 @@
+{
+  "Database": "recordings",
+  "Features": ["spectral_centroid", "zcr", "mfcc0", "mfcc1", "mfcc2"],
+  "Records": ["glad-2018101314401539434458.wav",
+              "glad-2018101314401539434458.wav"]
+}
