@@ -120,8 +120,21 @@ std = np.std(feature_vectors, axis=0)
 mean = np.mean(feature_vectors, axis=0)
 norm_vectors = np.divide(np.subtract(feature_vectors,mean),std)
 
-
-
+# Save the setup parameters
+t = datetime.now()
+filename_ext = str(t.year) + "-" + str(t.month) + "-" + str(t.day) + "-" + str(t.hour) + "-" + str(t.minute) + "-" + \
+              str(t.second)
+filename = "./data/training"+filename_ext+".npy"
+# Generate training set for un-supervised training
+np.save(filename, feature_vectors)
+# Save config parameters
+json_filename = get_json_filename()
+with open(json_filename) as json_file:
+    config_param = json.load(json_file)
+    print(config_param)
+filename = "./data/config"+filename_ext+".json"
+with open(filename, 'w') as json_file:
+    json.dump(config_param, json_file)
 
 cursor.close()
 cnx.commit()

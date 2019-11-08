@@ -182,11 +182,12 @@ for audio_file in audio_files:
     # Create the Recording table for this file
     date = str(datetime.now())
     date = date.split(".")[0]
+    file_name = audio_file.split('/')[-1]
     add_record_row = ("insert into Recording"
                         "(date, sound_file) "
                         "values (%s, %s)")
     try:
-        cursor.execute(add_record_row, (date, audio_file))
+        cursor.execute(add_record_row, (date, file_name))
     except mysql.connector.Error as err:
         print(err)
         exit(1)
@@ -212,6 +213,13 @@ for audio_file in audio_files:
         print(err)
         exit(1)
     sound_id = cursor.lastrowid
+    # Update parent in Sound_statistics tables
+    add_statistics_parent = ("update Sound_statistics set parent=%s where Sound_statistics.id=%s")
+    cursor.execute(add_statistics_parent, (sound_id, std_id))
+    cursor.execute(add_statistics_parent, (sound_id, mean_id))
+    cursor.execute(add_statistics_parent, (sound_id, min_id))
+    cursor.execute(add_statistics_parent, (sound_id, max_id))
+
     # Update sound_id in record row
     print("Update the sound feature pointer in record")
     update_sound_id = ("update Recording set sound = %s where Recording.id = %s")
