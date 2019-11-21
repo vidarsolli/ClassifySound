@@ -8,6 +8,7 @@ import time
 import sys, getopt
 import librosa
 import os
+import random
 
 
 import numpy as np
@@ -72,22 +73,22 @@ x_train = np.reshape(x_train, (int(len(x_train)/window_size), window_size, 1))
 print(x_train.shape)
 input = Input(shape=(int(cp["sample_rate"]*cp["short_term"]), 1))  # adapt this if using `channels_first` image data format
 
-x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], data_format='channels_last', padding='same')(input)
+x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], data_format='channels_last', padding='same')(input)
 x = MaxPooling1D(2, padding='same')(x)
-x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], padding='same')(x)
+x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = MaxPooling1D(2, padding='same')(x)
-x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], padding='same')(x)
+x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 encoded = MaxPooling1D(2, padding='same')(x)
 
 # at this point the representation is (4, 4, 8) i.e. 128-dimensional
 
-x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], padding='same')(encoded)
+x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(encoded)
 x = UpSampling1D(2)(x)
-x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], padding='same')(x)
+x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = UpSampling1D(2)(x)
-x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], padding='same')(x)
+x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = UpSampling1D(2)(x)
-decoded = Conv1D(1, 3, activation='sigmoid', padding='same')(x)
+decoded = Conv1D(1, 3, activation='tanh', padding='same')(x)
 
 print(type(decoded))
 
@@ -95,15 +96,15 @@ autoencoder = Model(input, decoded)
 
 plot_model(autoencoder, show_shapes=True, expand_nested=True, to_file='model.png')
 
-autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+autoencoder.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # Start the TensorBoard server by: tensorboard --logdir=/tmp/autoencoder
 # and navigate to: http://0.0.0.0:6006
-"""
-autoencoder.fit(x_train, x_train,
-                cp["epochs"],
-                cp["batch_size"],
+
+if cp["train"]:
+    autoencoder.fit(x_train, x_train,
+                epochs=cp["epochs"],
+                batch_size=cp["batch_size"],
                 shuffle=True,
-                validation_data=(x_train, x_train),
+                validation_split=cp["validation_split"],
                 callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
-"""

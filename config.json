@@ -1,15 +1,18 @@
 {
-  "filter1_size": 50,
-  "filter2_size": 20,
-  "filter3_size": 100,
+  "filter1_size": 20,
+  "filter2_size": 10,
+  "filter3_size": 10,
   "kernal1_size": 10,
   "kernal2_size": 5,
   "kernal3_size": 2,
   "activation": "relu",
+  "strides": 1,
   "audio_folder": "./audio",
-  "short_term": 0.1,
-  "step_size": 0.05,
+  "short_term": 0.05,
+  "step_size": 0.025,
   "sample_rate": 8000,
-  "epochs": 50,
-  "batch_size": 128
+  "epochs": 100,
+  "batch_size": 32,
+  "train": 1,
+  "validation_split": 0.2
 }
