@@ -52,6 +52,7 @@ with open(json_file) as file:
 # Build training set
 
 audio_files = get_audiofiles(cp["audio_folder"])
+x_train = np.array([])
 for file in audio_files:
     audio_samples, sample_rate = librosa.load(file)
     audio_samples=librosa.resample(audio_samples, sample_rate, cp["sample_rate"])
@@ -62,12 +63,16 @@ for file in audio_files:
     # dt = time between each feature vector
     dt = step_size/sample_rate
     print("Extracting features from ", file, "# samples: ", audio_samples.shape, " sr: ", cp["sample_rate"], " dt: ", dt, "# features: ", no_of_samples)
+
     for i in range(no_of_samples):
+        y = audio_samples[(i*step_size):(i*step_size+window_size)]
+        x_train = np.append(x_train, y)
 
-
+x_train = np.reshape(x_train, (int(len(x_train)/window_size), window_size, 1))
+print(x_train.shape)
 input = Input(shape=(int(cp["sample_rate"]*cp["short_term"]), 1))  # adapt this if using `channels_first` image data format
 
-x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], padding='same')(input)
+x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], data_format='channels_last', padding='same')(input)
 x = MaxPooling1D(2, padding='same')(x)
 x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], padding='same')(x)
 x = MaxPooling1D(2, padding='same')(x)
@@ -80,10 +85,11 @@ x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], 
 x = UpSampling1D(2)(x)
 x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], padding='same')(x)
 x = UpSampling1D(2)(x)
-x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"])(x)
+x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], padding='same')(x)
 x = UpSampling1D(2)(x)
 decoded = Conv1D(1, 3, activation='sigmoid', padding='same')(x)
 
+print(type(decoded))
 
 autoencoder = Model(input, decoded)
 
@@ -95,9 +101,9 @@ autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 # and navigate to: http://0.0.0.0:6006
 """
 autoencoder.fit(x_train, x_train,
-                cp["epochs"]=50,
-                cp["batch_size"]=128,
+                cp["epochs"],
+                cp["batch_size"],
                 shuffle=True,
-                validation_data=(x_test, x_test),
+                validation_data=(x_train, x_train),
                 callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
 """
