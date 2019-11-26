@@ -1,8 +1,9 @@
 {
-  "AudioFolder":"./Sound",
+  "AudioFolder":"./audio",
   "Database": "recordings",
   "WindowSize": 0.05,
   "StepSize":   0.025,
+  "sample_rate": 8000,
   "Windowing": "Yes",
   "Energy": "Yes",
   "ZCR": "Yes",

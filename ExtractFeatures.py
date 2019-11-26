@@ -132,15 +132,26 @@ def path_to_audiofiles(dir_folder):
     return list_of_audio
 
 # Get the configuration parameters and list of audio files
-json_file = get_json_filename()
-print(json_file)
-get_config_params(json_file)
+json_file_name = get_json_filename()
+print(json_file_name)
+with open(json_file_name) as json_file:
+    cp = json.load(json_file)
+
+get_config_params(json_file_name)
 audio_files = path_to_audiofiles(audio_folder)
+
+# Connevt the database
+print(mysql.connector.__version__)
+cnx = mysql.connector.connect(user='vidar', password='hemmelig', host='localhost', database=database)
+cursor = cnx.cursor()
 
 # Loop through all audiofiles and calculate the features
 for audio_file in audio_files:
     # Calculate features
     audio_samples, sample_rate = librosa.load(audio_file)
+    audio_samples = librosa.resample(audio_samples, sample_rate, cp["sample_rate"])
+    sample_rate = cp["sample_rate"]
+
     window_size = int(window_size_sec * sample_rate)
     step_size = int(step_size_sec * sample_rate)
     print("Window_size: ", window_size, "Step_size: ", step_size)
@@ -169,9 +180,6 @@ for audio_file in audio_files:
     #---------------------
     # Save the features in the database
     #---------------------
-    print(mysql.connector.__version__)
-    cnx = mysql.connector.connect(user='parallels', password='ubuntuerbra', host='localhost', database=database)
-    cursor = cnx.cursor()
     try:
         cursor.execute("USE {}".format(database))
     except mysql.connector.Error as err:

@@ -58,7 +58,7 @@ print(json_file)
 get_config_params(json_file)
 
 print(mysql.connector.__version__)
-cnx = mysql.connector.connect(user='parallels', password='ubuntuerbra', host='localhost', database=database)
+cnx = mysql.connector.connect(user='vidar', password='hemmelig', host='localhost', database=database)
 cursor = cnx.cursor()
 try:
     cursor.execute("USE {}".format(database))
@@ -86,8 +86,18 @@ feature_vectors = np.zeros((1, len(selected_features)), dtype=float)
 vector = np.zeros((1, len(selected_features)), dtype=float)
 row = 0
 # Create a one dimentional array of feature data and reshape te array later
+if selected_records[0] == "all":
+    print("All files selected")
+    command = "select sound_file from Recording"
+    cursor.execute(command)
+    selected_records = cursor.fetchall()
+    selected_records = [str(x) for x, in selected_records]
+
+print(selected_records)
+
 for record in selected_records:
     # Get the record
+    print(record)
     command = "select Recording.sound from Recording where sound_file = %s"
     cursor.execute(command, (record,))
     sound_id = cursor.fetchall()[-1][0]

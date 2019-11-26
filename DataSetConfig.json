@@ -1,6 +1,6 @@
 {
   "Database": "recordings",
-  "Features": ["spectral_centroid", "zcr", "mfcc0", "mfcc1", "mfcc2"],
-  "Records": ["glad-2018101314401539434458.wav",
-              "glad-2018101314401539434458.wav"]
+  "Features": ["zcr", "spectral_centroid", "spectral_rolloff", "spectral_flatness",
+    "mfcc0", "mfcc1", "mfcc2", "mfcc2", "mfcc3", "mfcc4", "mfcc5", "mfcc6", "mfcc7", "mfcc8", "mfcc9", "mfcc10", "mfcc11", "mfcc12"],
+  "Records": ["all"]
 }
