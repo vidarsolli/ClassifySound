@@ -1,0 +1,5 @@
+{
+    "train_file": "training2019-11-26-16-5-39.npy",
+    "train_dir": "./data",
+    "validation_split": 0.2
+}

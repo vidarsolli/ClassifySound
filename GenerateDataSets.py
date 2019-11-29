@@ -126,9 +126,9 @@ for record in selected_records:
 # Remove the first empty row
 feature_vectors = np.delete(feature_vectors, 0, 0)
 # Normalize the values
-std = np.std(feature_vectors, axis=0)
-mean = np.mean(feature_vectors, axis=0)
-norm_vectors = np.divide(np.subtract(feature_vectors,mean),std)
+min = np.min(feature_vectors, axis=0)
+max = np.max(feature_vectors, axis=0)
+norm_vectors = np.divide(np.subtract(feature_vectors,min),(max-min))
 
 # Save the setup parameters
 t = datetime.now()
@@ -136,7 +136,7 @@ filename_ext = str(t.year) + "-" + str(t.month) + "-" + str(t.day) + "-" + str(t
               str(t.second)
 filename = "./data/training"+filename_ext+".npy"
 # Generate training set for un-supervised training
-np.save(filename, feature_vectors)
+np.save(filename, norm_vectors)
 # Save config parameters
 json_filename = get_json_filename()
 with open(json_filename) as json_file:

@@ -3,6 +3,7 @@ from keras.models import Model
 from keras import backend as K
 from keras.utils import plot_model
 from keras.callbacks import TensorBoard
+from keras.callbacks import EarlyStopping
 import json
 import time
 import sys, getopt
@@ -97,7 +98,7 @@ x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], 
 x = UpSampling1D(2)(x)
 x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = UpSampling1D(2)(x)
-decoded = Conv1D(1, 3, activation='sigmoid', padding='same')(x)
+decoded = Conv1D(1, 3, activation='linear', padding='same')(x)
 
 print(type(decoded))
 
@@ -105,15 +106,28 @@ autoencoder = Model(input, decoded)
 
 plot_model(autoencoder, show_shapes=True, expand_nested=True, to_file='model.png')
 
-autoencoder.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+autoencoder.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
 
 # Start the TensorBoard server by: tensorboard --logdir=/tmp/autoencoder
 # and navigate to: http://0.0.0.0:6006
 # In case, add: callbacks=[TensorBoard(log_dir='/tmp/autoencoder')]
 
+print(x_train.shape)
+
+earlystopper = EarlyStopping(monitor='loss', min_delta=0.0001, patience=2, verbose=1)
+
 if cp["train"]:
     autoencoder.fit(x_train, x_train,
                 epochs=cp["epochs"],
                 batch_size=cp["batch_size"],
-                verbose=True,
-                validation_split=cp["validation_split"])
+                verbose=2,
+                validation_split=cp["validation_split"],
+                callbacks=[earlystopper])
+
+# serialize model to JSON
+model_json = autoencoder.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+autoencoder.save_weights("model.h5")
+print("Saved model to disk")
