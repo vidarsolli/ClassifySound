@@ -14,6 +14,8 @@ import random
 
 import numpy as np
 
+labels = ['a_n', 'a_l','a_h', 'a_lhl','i_n', 'i_l','i_h', 'i_lhl', 'u_n', 'u_l','u_h', 'u_lhl',]
+
 """
 AutodecoderRaw will train a 1D convolutional autoencoder with raw audio signals
 and cluster the encoder vector to see if clusters contains sound with similar characteristics.
@@ -56,6 +58,7 @@ try:
 except:
     # Build training set
     audio_files = get_audiofiles(cp["audio_folder"])
+    y_train = np.array([])
     x_train = np.array([])
     for file in audio_files:
         audio_samples, sample_rate = librosa.load(file)
@@ -71,6 +74,9 @@ except:
         for i in range(no_of_samples):
             y = audio_samples[(i*step_size):(i*step_size+window_size)]
             x_train = np.append(x_train, y)
+            label = str.split(file, '.')[1]
+            label = str.split(label, "-")[1]
+            y_train = np.append(y_train, labels.index(label))
 
     x_train = np.reshape(x_train, (int(len(x_train)/window_size), window_size, 1))
     x_train += 1
@@ -78,8 +84,10 @@ except:
     min = np.min(x_train)
     max = np.max(x_train)
     print(min, max)
-    print(x_train.shape)
+    print("X_train shape: ", x_train.shape)
     np.save("x_train", x_train)
+    print("Y_train shape: ", y_train.shape)
+    np.save("y_train", y_train)
 
 input = Input(shape=(int(cp["sample_rate"]*cp["short_term"]), 1))  # adapt this if using `channels_first` image data format
 
