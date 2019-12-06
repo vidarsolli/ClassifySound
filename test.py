@@ -1,31 +1,30 @@
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Conv1D, MaxPooling1D, AveragePooling1D, Flatten, Reshape, UpSampling1D
 from keras.models import Model
 from keras.datasets import mnist
 import numpy as np
+from keras.utils import plot_model
 
-(x_train, _), (x_test, _) = mnist.load_data()
-x_train = x_train.astype('float32') / 255.
-x_test = x_test.astype('float32') / 255.
-x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-print(x_train.shape)
-print(x_test.shape)
 
-# this is the size of our encoded representations
-encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
-# this is our input placeholder
-input_img = Input(shape=(784,))
-# "encoded" is the encoded representation of the input
-encoded = Dense(encoding_dim, activation='relu')(input_img)
-# "decoded" is the lossy reconstruction of the input
-decoded = Dense(784, activation='sigmoid')(encoded)
+input_sig = Input(batch_shape=(1,128,1))
+x = Conv1D(8,3, activation='relu', padding='same',dilation_rate=2)(input_sig)
+x1 = MaxPooling1D(2)(x)
+x2 = Conv1D(4,3, activation='relu', padding='same',dilation_rate=2)(x1)
+x3 = MaxPooling1D(2)(x2)
+x4 = AveragePooling1D()(x3)
+flat = Flatten()(x4)
+encoded = Dense(2)(flat)
+d1 = Dense(64)(encoded)
+d2 = Reshape((16,4))(d1)
+d3 = Conv1D(4,1,strides=1, activation='relu', padding='same')(d2)
+d4 = UpSampling1D(2)(d3)
+d5 = Conv1D(8,1,strides=1, activation='relu', padding='same')(d4)
+d6 = UpSampling1D(2)(d5)
+d7 = UpSampling1D(2)(d6)
+decoded = Conv1D(1,1,strides=1, activation='sigmoid', padding='same')(d7)
+model= Model(input_sig, decoded)
 
-# this model maps an input to its reconstruction
-autoencoder = Model(input_img, decoded)
-autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-autoencoder.fit(x_train, x_train,
-                epochs=50,
-                batch_size=100,
-                shuffle=True,
-                validation_data=(x_test, x_test))
+plot_model(model, show_shapes=True, expand_nested=True, to_file='model.png')
+
+model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+print(model.summary())

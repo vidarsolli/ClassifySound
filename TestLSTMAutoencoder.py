@@ -19,7 +19,7 @@ model.add(TimeDistributed(Dense(1)))
 model.compile(optimizer='adam', loss='mse')
 # fit model
 model.fit(sequence, sequence, epochs=300, verbose=0)
-plot_model(model, show_shapes=True, to_file='reconstruct_lstm_autoencoder.png')
+plot_model(model, show_shapes=True, expand_nested = True, to_file='reconstruct_lstm_autoencoder.png')
 # demonstrate recreation
 yhat = model.predict(sequence, verbose=0)
 print(yhat[0,:,0])

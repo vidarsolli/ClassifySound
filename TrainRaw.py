@@ -57,6 +57,7 @@ with open(json_file) as file:
 
 try:
     x_train = np.load("x_train.npy")
+    y_train = np.load("y_train.npy")
 except:
     # Build training set
     audio_files = get_audiofiles(cp["audio_folder"])
@@ -76,11 +77,14 @@ except:
         for i in range(no_of_samples):
             y = audio_samples[(i*step_size):(i*step_size+window_size)]
             x_train = np.append(x_train, y)
+            y_vector = np.zeros(len(labels))
             label = str.split(file, '.')[1]
             label = str.split(label, "-")[1]
-            y_train = np.append(y_train, labels.index(label))
+            y_vector[labels.index(label)] = 1
+            y_train = np.append(y_train, y_vector)
 
     x_train = np.reshape(x_train, (int(len(x_train)/window_size), window_size, 1))
+    y_train = np.reshape(y_train, (int(len(y_train)/len(labels)), len(labels)))
     x_train += 1
     x_train *= 0.4
     min = np.min(x_train)
@@ -93,23 +97,15 @@ except:
 
 input = Input(shape=(int(cp["sample_rate"]*cp["short_term"]), 1))  # adapt this if using `channels_first` image data format
 
-x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], data_format='channels_last', padding='valid')(input)
+x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], data_format='channels_last', padding='same')(input)
 x = MaxPooling1D(2, padding='same')(x)
-x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='valid')(x)
+x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = MaxPooling1D(2, padding='same')(x)
-x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], strides=cp["strides"], padding='valid')(x)
+x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
 x = MaxPooling1D(2, padding='same')(x)
 encoded = Flatten()(x)
-x = Dense(25, activation=cp["activation"])(encoded)
-decoded = Dense(int(cp["sample_rate"]*cp["short_term"]), activation='linear') (x)
-
-#x = Conv1D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(encoded)
-#x = UpSampling1D(2)(x)
-#x = Conv1D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
-#x = UpSampling1D(2)(x)
-#x = Conv1D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
-#x = UpSampling1D(2)(x)
-#decoded = Conv1D(1, 3, activation='linear', padding='same')(x)
+x = Dense(cp["dense1_size"], activation=cp["activation"])(encoded)
+decoded = Dense(len(labels), activation='softmax') (x)
 
 print(type(decoded))
 
@@ -117,7 +113,7 @@ autoencoder = Model(input, decoded)
 
 plot_model(autoencoder, show_shapes=True, expand_nested=True, to_file='model.png')
 print("Compiling model")
-autoencoder.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+autoencoder.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 print(autoencoder.summary())
 
 # Start the TensorBoard server by: tensorboard --logdir=/tmp/autoencoder
@@ -129,7 +125,7 @@ print(x_train.shape)
 earlystopper = EarlyStopping(monitor='loss', min_delta=0.00001, patience=2, verbose=1)
 
 if cp["train"]:
-    history = autoencoder.fit(x_train, x_train[:,:,0],
+    history = autoencoder.fit(x_train, y_train,
                 epochs=cp["epochs"],
                 batch_size=cp["batch_size"],
                 verbose=1,

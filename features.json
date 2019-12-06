@@ -1,0 +1,19 @@
+{
+  "AudioFolder":"./audio",
+  "WindowSize": 0.05,
+  "StepSize":   0.025,
+  "SampleRate": 8000,
+  "Windowing": "Yes",
+  "Energy": "Yes",
+  "ZCR": "Yes",
+  "EnergyEntropy": "No",
+  "SpectralCentroid": "Yes",
+  "SpectralSpread": "No",
+  "SpectralFlux": "No",
+  "SpectralRolloff": "No",
+  "MFCC": "Yes",
+  "Chroma": "Yes",
+  "Mel": "Yes",
+  "SpectralFlatness": "No",
+  "Normalization": "MinMax"
+}
