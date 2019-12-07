@@ -1,0 +1,21 @@
+{
+  "filter1_size": 50,
+  "filter2_size": 20,
+  "filter3_size": 10,
+  "kernal1_size": 3,
+  "kernal2_size": 3,
+  "kernal3_size": 3,
+  "dense1_size": 50,
+  "activation": "relu",
+  "strides": 1,
+  "audio_folder": "./audio",
+  "test_folder": "./audio/test",
+  "short_term": 0.05,
+  "long_term": 1.0,
+  "step_size": 0.05,
+  "sample_rate": 8000,
+  "epochs": 100,
+  "batch_size": 128,
+  "train": 1,
+  "validation_split": 0.2
+}
