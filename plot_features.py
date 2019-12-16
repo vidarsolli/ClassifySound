@@ -17,7 +17,7 @@ N_CHROMA = 12   # Number of Chroma elements
 N_MEL = 16      # Number of mel spectrum elements
 ROLLOFF_PERCENT = 0.85
 
-y, sr = librosa.load("./audio/out/L_misfornøyd2.wav")
+y, sr = librosa.load("./audio/vowels/6-a_lhl.wav")
 print(sr)
 print("Duration before:", librosa.get_duration(y))
 y, index = librosa.effects.trim(y, top_db=20, frame_length= 512, hop_length = 128)

@@ -32,19 +32,18 @@ def gen_training_data(config_file):
         cp = json.load(json_file)
     audio_files = path_to_audiofiles(cp["AudioFolder"])
     training_data = np.array([])
+    annotation = list()
     for audio_file in audio_files:
         # Read the audio file and resample to wanted sample rate. If the file contains 2 channels,
         # select audio_samples[0]
         audio_samples, sample_rate = librosa.load(audio_file)
-        print(type(audio_samples))
+        audio_samples = librosa.resample(audio_samples, sample_rate, cp["SampleRate"])
+        sample_rate = cp["SampleRate"]
         window_size = int(cp["WindowSize"] * sample_rate)
         step_size = int(cp["StepSize"] * sample_rate)
-        audio_samples = librosa.resample(audio_samples, sample_rate, cp["SampleRate"])
         audio_samples = librosa.effects.trim(audio_samples, top_db=20, frame_length=window_size, hop_length=step_size)
-        sample_rate = cp["SampleRate"]
-        print(type(audio_samples))
+
         audio_samples = np.array(audio_samples[0])
-        print(type(audio_samples))
 
         # print("Window_size: ", window_size, "Step_size: ", step_size)
         no_of_samples = int((audio_samples.shape[0]-window_size)/step_size)
@@ -59,7 +58,7 @@ def gen_training_data(config_file):
             feature_vector = np.zeros((50, no_of_samples))
             vector_idx = 0
             if cp["MFCC"]:
-                feature_vector[0:N_MFCC, :] = librosa.feature.mfcc(y=audio_samples, sr=sample_rate, hop_length=step_size, window='hann', n_mfcc=N_MFCC)[:,0:no_of_samples]
+                feature_vector[vector_idx:N_MFCC, :] = librosa.feature.mfcc(y=audio_samples, sr=sample_rate, hop_length=step_size, window='hann', n_mfcc=N_MFCC)[:,0:no_of_samples]
                 vector_idx += N_MFCC
             if cp["ZCR"]:
                 feature_vector[vector_idx:vector_idx+1, :] = librosa.feature.zero_crossing_rate(y=audio_samples, frame_length=window_size, hop_length=step_size)[:,0:no_of_samples]
@@ -84,6 +83,13 @@ def gen_training_data(config_file):
             feature_vector = feature_vector.T
             #training_data[i * 4 + j, :, 0:13] = mfcc.T[step * j:timeseries_length + step * j, :]
             training_data = np.append(training_data, feature_vector[:,0:vector_idx])
+            # Annotate the data with the filename
+            label = str.split(str.split(audio_file, ".")[-2], "/")[-1]
+            print(label)
+            for i in range(no_of_samples):
+                annotation.append(label)
+    print(annotation)
+
     # Normailize the data
     training_data = np.reshape(training_data, (int(training_data.shape[0]/vector_idx), vector_idx))
     #print(training_data.shape)
@@ -100,4 +106,4 @@ def gen_training_data(config_file):
         training_data = (training_data[:,]-mean)/std
     #print(training_data[2, :])
 
-    return training_data
+    return training_data, annotation

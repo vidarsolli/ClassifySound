@@ -24,45 +24,63 @@ Usage:  python3 AutoencoderRaw -i <filenam>.json
 
 """
 
-json_file = "./train2D.json"
-# Get the input json file
+config_file = "./train2D.json"
+features_file = "./features.json"
+
+# Get the configuration json file
 try:
     myOpts, args = getopt.getopt(sys.argv[1:], "i:")
 except getopt.GetoptError as e:
     print(str(e))
-    print("Usage: %s -i <json_file>" % sys.argv[0])
+    print("Usage: %s -i <config_file> -f <feature_file>" % sys.argv[0])
     sys.exit(2)
 
 for o, a in myOpts:
     if o == '-i':
-        json_file = a
-print(json_file)
-with open(json_file) as file:
-    cp = json.load(file)
+        config_file = a
+    if o == '-f':
+        features_file = a
 
-samples = cp["long_term"]/cp["step_size"]
-samples -= (samples*cp["step_size"]-cp["long_term"])/cp["step_size"]
+with open(config_file) as file:
+    cp = json.load(file)
+with open(features_file) as file:
+    fcp = json.load(file)
+
+# Calculate number of feature vectors needed to cover the long-term period
+samples = cp["long_term"]/fcp["StepSize"]
+samples -= (samples*fcp["StepSize"]-cp["long_term"])/fcp["StepSize"]
 height = int(samples)
 print("No of feature vectors per set: ", height)
 
-data = gen_training_data("features.json")
-print("Generated feature data shape:", data.shape)
+# Generate the data and annotation
+data, annotation = gen_training_data("features.json")
+print("Training data and annotation shape:", data.shape, len(annotation))
 width = data.shape[1]
 
-# Build the training set
-training_samples = 0
-x_train = np.array([])
-for i in range(data.shape[0]- height):
-    x_train = np.append(x_train, data[i:i+height,:])
-print("Training data shape (before reshape): ", x_train.shape)
+# Make sure that each chunk of data belongs to the same label, and
+# that the annotation is correct
+data = np.reshape(data[0:int(int(data.shape[0]/height)*height),:], (int(data.shape[0]/height), int(data.shape[1]*height)))
+print("Data shape: ", data.shape)
+temp_data = np.array([])
+tmp_annotation = list()
+for i in range(int(data.shape[0])):
+    if annotation[i*height] == annotation[i*height+(height-1)]:
+        temp_data = np.append(temp_data, data[i, :])
+        tmp_annotation.append(str.split(annotation[i*height], ".")[0])
+print("temp shape: ", data.shape)
+data = temp_data
+annotation = tmp_annotation
+print("Data shape: ", data.shape)
 
-x_train = np.reshape(x_train, (int(x_train.shape[0]/(height * width)), height, width, 1))
+
+#print("Training data shape (before reshape): ", x_train.shape)
+# Reshape the data to match the network
+x_train = np.reshape(data, (int(data.shape[0]/(height * width)), height, width, 1))
 y_train = np.reshape(x_train, (x_train.shape[0], width*height))
-print("Training data shape: ", x_train.shape)
+print("Training data and test data shape: ", x_train.shape, y_train.shape)
 
-print(x_train.shape)
+# Build the autoencoder network model
 input = Input(shape=(height, width, 1))  # adapt this if using `channels_first` image data format
-
 x = Conv2D(cp["filter1_size"], cp["kernal1_size"], activation=cp["activation"], strides=cp["strides"], data_format='channels_last', padding='same')(input)
 x = MaxPooling2D(2, padding='same')(x)
 x = Conv2D(cp["filter2_size"], cp["kernal2_size"], activation=cp["activation"], strides=cp["strides"], padding='same')(x)
@@ -71,47 +89,46 @@ x = Conv2D(cp["filter3_size"], cp["kernal3_size"], activation=cp["activation"], 
 x = MaxPooling2D(2, padding='same')(x)
 encoded = Flatten()(x)
 x = Dense(cp["dense1_size"], activation=cp["activation"])(encoded)
+x = Dense(cp["dense2_size"], activation=cp["activation"])(x)
 decoded = Dense(height*width, activation='linear') (x)
-
-print(type(decoded))
-
 autoencoder = Model(input, decoded)
 
-plot_model(autoencoder, show_shapes=True, expand_nested=True, to_file='model.png')
+# Save the model graph
+plot_model(autoencoder, show_shapes=True, expand_nested=True, to_file='2Dmodel.png')
+
 print("Compiling model")
-autoencoder.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+autoencoder.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
 print(autoencoder.summary())
 
 # Start the TensorBoard server by: tensorboard --logdir=/tmp/autoencoder
 # and navigate to: http://0.0.0.0:6006
 # In case, add: callbacks=[TensorBoard(log_dir='/tmp/autoencoder')]
 
-print(x_train.shape)
-
 earlystopper = EarlyStopping(monitor='loss', min_delta=0.00001, patience=2, verbose=1)
 
+# Train the model
 if cp["train"]:
     history = autoencoder.fit(x_train, y_train,
                 epochs=cp["epochs"],
                 batch_size=cp["batch_size"],
-                verbose=1,
+                verbose=2,
                 validation_split=cp["validation_split"])
 #                callbacks=[earlystopper])
 
 # serialize model to JSON
 model_json = autoencoder.to_json()
-with open("model.json", "w") as json_file:
+with open("2Dmodel.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights to HDF5
-autoencoder.save_weights("model.h5")
+autoencoder.save_weights("2Dmodel.h5")
 print("Saved model to disk")
 
-# Plot the result
-# Plot training & validation loss values
+# Plot accuracy training & validation loss values
 plt.plot(history.history['loss'])
+plt.plot(history.history['accuracy'])
 plt.plot(history.history['val_loss'])
 plt.title('Model loss')
-plt.ylabel('Loss')
+plt.ylabel('Loss & Accuracy')
 plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
+plt.legend(['Train', 'Accuracy', 'Test'], loc='upper left')
 plt.show()
