@@ -1,0 +1,6 @@
+{
+
+  "long_term": 0.5,
+  "no_of_components": 2,
+  "plot": ["L_cr7", "L_ds5", "L_pl5"]
+}

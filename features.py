@@ -105,5 +105,7 @@ def gen_training_data(config_file):
     if cp["Normalization"] == "Std":
         training_data = (training_data[:,]-mean)/std
     #print(training_data[2, :])
+    np.save("features", training_data)
+    np.save("annotation", annotation)
 
     return training_data, annotation
