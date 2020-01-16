@@ -22,11 +22,8 @@ labels = ['a_n', 'a_l','a_h', 'a_lhl','i_n', 'i_l','i_h', 'i_lhl', 'u_n', 'u_l',
 AutodecoderRaw will train a 1D convolutional autoencoder with raw audio signals
 and cluster the encoder vector to see if clusters contains sound with similar characteristics.
 The parameters for the network are stored in a .json file
-
 The audiofiles to be used are stored in a folder (folder to be stated in the .json file).
-
 Usage:  python3 AutoencoderRaw -i <filenam>.json
-
 """
 
 json_file = "./config.json"
