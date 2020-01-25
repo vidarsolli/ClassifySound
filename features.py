@@ -10,7 +10,7 @@ import librosa.display
 # Configuration parameters are supplied via a .json file
 
 # Configuration parameters
-N_MFCC = 13     # Number of MFCC elements
+N_MFCC = 20     # Number of MFCC elements
 N_CHROMA = 12   # Number of Chroma elements
 N_MEL = 16      # Number of mel spectrum elements
 ROLLOFF_PERCENT = 0.85
