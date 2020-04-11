@@ -1,30 +1,40 @@
-from keras.layers import Input, Dense, Conv1D, MaxPooling1D, AveragePooling1D, Flatten, Reshape, UpSampling1D
-from keras.models import Model
-from keras.datasets import mnist
+import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
-from keras.utils import plot_model
+
+#from mpl_toolkits.mplot3d.axes3d import get_test_data
+# This import registers the 3D projection, but is otherwise unused.
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 
 
-input_sig = Input(batch_shape=(1,128,1))
-x = Conv1D(8,3, activation='relu', padding='same',dilation_rate=2)(input_sig)
-x1 = MaxPooling1D(2)(x)
-x2 = Conv1D(4,3, activation='relu', padding='same',dilation_rate=2)(x1)
-x3 = MaxPooling1D(2)(x2)
-x4 = AveragePooling1D()(x3)
-flat = Flatten()(x4)
-encoded = Dense(2)(flat)
-d1 = Dense(64)(encoded)
-d2 = Reshape((16,4))(d1)
-d3 = Conv1D(4,1,strides=1, activation='relu', padding='same')(d2)
-d4 = UpSampling1D(2)(d3)
-d5 = Conv1D(8,1,strides=1, activation='relu', padding='same')(d4)
-d6 = UpSampling1D(2)(d5)
-d7 = UpSampling1D(2)(d6)
-decoded = Conv1D(1,1,strides=1, activation='sigmoid', padding='same')(d7)
-model= Model(input_sig, decoded)
+# set up a figure twice as wide as it is tall
+fig = plt.figure(figsize=plt.figaspect(0.5))
 
+#===============
+#  First subplot
+#===============
+# set up the axes for the first plot
+ax = fig.add_subplot(1, 2, 1, projection='3d')
 
-plot_model(model, show_shapes=True, expand_nested=True, to_file='model.png')
+# plot a 3D surface like in the example mplot3d/surface3d_demo
+X = np.arange(-5, 5, 0.25)
+Y = np.arange(-5, 5, 0.25)
+X, Y = np.meshgrid(X, Y)
+R = np.sqrt(X**2 + Y**2)
+Z = np.sin(R)
+surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+                       linewidth=0, antialiased=False)
+ax.set_zlim(-1.01, 1.01)
+fig.colorbar(surf, shrink=0.5, aspect=10)
 
-model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-print(model.summary())
+#===============
+# Second subplot
+#===============
+# set up the axes for the second plot
+ax = fig.add_subplot(1, 2, 2, projection='3d')
+
+# plot a 3D wireframe like in the example mplot3d/wire3d_demo
+X, Y, Z = get_test_data(0.05)
+ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
+
+plt.show()

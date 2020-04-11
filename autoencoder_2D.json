@@ -7,7 +7,7 @@
   "no_of_filter6": 16,
   "no_of_filter7": 16,
   "no_of_filter8": 16,
-  "dense1_size": 10,
+  "dense1_size": 15,
   "activation": "tanh",
   "last_activation": "linear",
   "learning_rate": 0.01,
@@ -23,10 +23,12 @@
   "audio_folder": "./audio/test/export",
   "test_folder": "./audio/lukas",
   "layer_name": "max_pooling1d_7",
-  "epochs": 200,
+  "epochs": 50,
+  "force_train": 0,
   "batch_size": 16,
   "code_size": 10,
   "train": 1,
+  "layer_filters": [64, 32],
   "validation_split": 0.2,
   "long_term": 0.5
 }

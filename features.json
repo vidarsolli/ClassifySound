@@ -1,5 +1,5 @@
 {
-  "AudioFolder":"./audio",
+  "AudioFolder":"../LiveTest/sound",
   "WindowSize": 0.025,
   "StepSize":   0.0125,
   "SampleRate": 8000,

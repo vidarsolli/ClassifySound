@@ -6,7 +6,7 @@ import os
 import librosa
 import librosa.display
 
-# features.py is a group of routines for extracting features from audio files
+# features.py is a group of routines extracting features from audio files
 # Configuration parameters are supplied via a .json file
 
 # Configuration parameters
@@ -20,14 +20,14 @@ ROLLOFF_PERCENT = 0.85
 def path_to_audiofiles(dir_folder):
     list_of_audio = []
     for file in os.listdir(dir_folder):
-        if file.endswith(".wav"):
+        if file.endswith(".wav") or file.endswith(".mp3"):
             directory = "%s/%s" % (dir_folder, file)
             list_of_audio.append(directory)
     return list_of_audio
 
 # Loop through all audiofiles and calculate the features
 def gen_training_data(config_file):
-    print("Generating traioning set baed on:", config_file)
+    print("Generating training set based on:", config_file)
     with open(config_file) as json_file:
         cp = json.load(json_file)
     audio_files = path_to_audiofiles(cp["AudioFolder"])
